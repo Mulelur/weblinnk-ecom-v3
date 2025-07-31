@@ -1,0 +1,29 @@
+import type { Product } from "@/types/Product";
+import { type PayloadAction, createSlice } from "@reduxjs/toolkit";
+
+// import { Product } from "@/types/Product";
+
+interface ProductState {
+  selectedProduct: Product | null;
+}
+
+const initialState: ProductState = {
+  selectedProduct: null,
+};
+
+const productSlice = createSlice({
+  name: "product",
+  initialState,
+  reducers: {
+    setSelectedProduct(state, action: PayloadAction<Product>) {
+      state.selectedProduct = action.payload;
+    },
+    clearSelectedProduct(state) {
+      state.selectedProduct = null;
+    },
+  },
+});
+
+export const { setSelectedProduct, clearSelectedProduct } =
+  productSlice.actions;
+export default productSlice.reducer;
