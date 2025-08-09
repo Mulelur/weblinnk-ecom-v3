@@ -11,11 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  // DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  // DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User as TUser } from "@/types";
@@ -24,6 +22,7 @@ import { auth } from "@/lib/initFirebase";
 import { toast } from "sonner";
 import { Footer } from "@/components/footer";
 import ProductSkeleton from "@/components/ProductSkeleton";
+import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 
 export type RouteParams = {
   id?: string;
@@ -38,6 +37,20 @@ export default function ProductDetailPage({ user }: Props) {
   const [product, setProduct] = React.useState<Product>();
   const [loading, setLoading] = React.useState(true);
   const [main, setMain] = React.useState<string | null>();
+
+  const [thumbIndex, setThumbIndex] = React.useState(0);
+
+  const handleNextThumbs = () => {
+    if (product?.images && thumbIndex < product.images.length - 3) {
+      setThumbIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevThumbs = () => {
+    if (thumbIndex > 0) {
+      setThumbIndex((prev) => prev - 1);
+    }
+  };
 
   const navigate = useNavigate();
 
@@ -78,7 +91,7 @@ export default function ProductDetailPage({ user }: Props) {
         <>
           <div className="min-h-screen h-full flex flex-col justify-between">
             <div className="mx-auto max-w-screen-lg">
-              <section className="shadow rounded-md container mt-2 flex items-center gap-6 px-2 pt-2 md:max-w-[84rem] md:py-2 lg:py-2">
+              <section className="shadow rounded-md container mt-2 flex items-center gap-2 px-2 pt-2 md:max-w-[84rem] md:py-2 lg:py-2">
                 <Button variant="outline" size="icon" onClick={handelBack}>
                   <ChevronLeft className="size-4" />
                 </Button>
@@ -101,20 +114,12 @@ export default function ProductDetailPage({ user }: Props) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56" align="start">
                       <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                      {/* <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      Profile
-                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Billing
-                      <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Truck />
-                      Track
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup> */}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => navigate("/orders")}>
+                          My Orders
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>
                         Log out
@@ -122,7 +127,15 @@ export default function ProductDetailPage({ user }: Props) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
-                  <Button onClick={() => navigate("/login")}>Login</Button>
+                  <Button
+                    onClick={() =>
+                      navigate(
+                        `/login?redirect=${window.location.pathname}&lang=en`
+                      )
+                    }
+                  >
+                    Login
+                  </Button>
                 )}
               </section>
               <section className="container flex flex-col gap-4 md:max-w-[84rem] md:py-4 lg:py-6">
@@ -141,7 +154,7 @@ export default function ProductDetailPage({ user }: Props) {
                             />
                           </div>
                         </div>
-                        <div className="mt-2 w-full px-8 lg:order-1 lg:w-32 lg:shrink-0">
+                        {/* <div className="mt-2 w-full px-8 lg:order-1 lg:w-32 lg:shrink-0">
                           <div className="flex flex-row gap-2 items-start lg:flex-col lg:justify-center">
                             {product.images &&
                               product.images.map((img) => {
@@ -168,6 +181,79 @@ export default function ProductDetailPage({ user }: Props) {
                                   </button>
                                 );
                               })}
+                          </div>
+                        </div> */}
+                        {/* Thumbnails */}
+                        <div className="mt-2 w-full px-8 lg:order-1 lg:w-32 lg:shrink-0">
+                          {/* Desktop vertical thumbnails */}
+                          <div className="hidden lg:flex flex-col lg:justify-center gap-2">
+                            {product.images?.map((img) => (
+                              <button
+                                key={img}
+                                onClick={() => setMain(img)}
+                                type="button"
+                                className={`aspect-square h-20 overflow-hidden rounded-lg border-2 ${
+                                  img === main
+                                    ? "border-gray-900"
+                                    : "border-transparent"
+                                }`}
+                              >
+                                <img
+                                  className="size-full object-cover"
+                                  src={img}
+                                  alt="Thumbnail"
+                                  width={100}
+                                  height={100}
+                                />
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Mobile horizontal carousel */}
+                          <div className="lg:hidden flex items-center gap-2">
+                            <button
+                              onClick={handlePrevThumbs}
+                              disabled={thumbIndex === 0}
+                              className="p-2 bg-gray-100 rounded disabled:opacity-50"
+                            >
+                              ◀
+                            </button>
+
+                            <div className="flex gap-2 overflow-hidden w-full">
+                              {product.images
+                                ?.slice(thumbIndex, thumbIndex + 3)
+                                .map((img) => (
+                                  <button
+                                    key={img}
+                                    onClick={() => setMain(img)}
+                                    type="button"
+                                    className={`aspect-square w-20 overflow-hidden rounded-lg border-2 ${
+                                      img === main
+                                        ? "border-gray-900"
+                                        : "border-transparent"
+                                    }`}
+                                  >
+                                    <img
+                                      className="size-full object-cover"
+                                      src={img}
+                                      alt="Thumbnail"
+                                      width={100}
+                                      height={100}
+                                    />
+                                  </button>
+                                ))}
+                            </div>
+
+                            <button
+                              onClick={handleNextThumbs}
+                              disabled={
+                                !product.images ||
+                                thumbIndex >= product.images.length - 3
+                              }
+                              className="p-2 bg-gray-100 rounded disabled:opacity-50"
+                            >
+                              ▶
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -203,67 +289,6 @@ export default function ProductDetailPage({ user }: Props) {
                           Buy Now!
                         </Button>
                       </div>
-                      {/* <div className="mb-10 mt-6 flex items-baseline border-b border-slate-200 pb-6">
-              <div className="flex space-x-2 text-sm">
-                <label>
-                  <input
-                    className="peer sr-only"
-                    name="size"
-                    type="radio"
-                    value="xs"
-                    checked
-                  />
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 peer-checked:bg-slate-900 peer-checked:font-semibold peer-checked:text-white">
-                    XS
-                  </div>
-                </label>
-                <label>
-                  <input
-                    className="peer sr-only"
-                    name="size"
-                    type="radio"
-                    value="s"
-                  />
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 peer-checked:bg-slate-900 peer-checked:font-semibold peer-checked:text-white">
-                    S
-                  </div>
-                </label>
-                <label>
-                  <input
-                    className="peer sr-only"
-                    name="size"
-                    type="radio"
-                    value="m"
-                  />
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 peer-checked:bg-slate-900 peer-checked:font-semibold peer-checked:text-white">
-                    M
-                  </div>
-                </label>
-                <label>
-                  <input
-                    className="peer sr-only"
-                    name="size"
-                    type="radio"
-                    value="l"
-                  />
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 peer-checked:bg-slate-900 peer-checked:font-semibold peer-checked:text-white">
-                    L
-                  </div>
-                </label>
-                <label>
-                  <input
-                    className="peer sr-only"
-                    name="size"
-                    type="radio"
-                    value="xl"
-                  />
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-700 peer-checked:bg-slate-900 peer-checked:font-semibold peer-checked:text-white">
-                    XL
-                  </div>
-                </label>
-              </div>
-            </div> */}
-
                       {/* <Perks /> */}
                     </div>
                     {product.description && (
@@ -297,8 +322,6 @@ export default function ProductDetailPage({ user }: Props) {
                               __html: product.description,
                             }}
                           />
-                          {/* {convert(selectedProduct.description, options)} */}
-                          {/* {selectedProduct.description} */}
                         </div>
                       </div>
                     )}

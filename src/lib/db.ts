@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  DocumentSnapshot,
   FieldValue,
   Timestamp,
   addDoc,
@@ -13,8 +14,10 @@ import {
   limit,
   orderBy,
   setDoc,
+  startAfter,
   updateDoc,
   where,
+  type DocumentData,
   type OrderByDirection,
   type WhereFilterOp,
 } from "firebase/firestore";
@@ -55,7 +58,7 @@ type WhereClause<T extends keyof FirestoreCollectionPaths> = [
 ];
 type OrderByClause<T> = [Extract<T, string>, OrderByDirection?];
 
-async function query<T extends keyof FirestoreCollectionPaths>({
+async function queryAll<T extends keyof FirestoreCollectionPaths>({
   collection: collectionPath,
   where: whereClause = [],
   orderBy: orderByClause,
@@ -87,6 +90,46 @@ async function query<T extends keyof FirestoreCollectionPaths>({
     ...item.data(),
     id: item.id,
   }));
+}
+
+async function query<T extends keyof FirestoreCollectionPaths>({
+  collection: collectionPath,
+  where: whereClause = [],
+  orderBy: orderByClause,
+  limit: limitClause = 1000,
+  startAfterDoc,
+}: {
+  collection: T;
+  where?: WhereClause<T>[] | WhereClause<T>;
+  orderBy?: OrderByClause<keyof Omit<FirestoreCollectionPaths[T], "id">>;
+  limit?: number;
+  startAfterDoc?: DocumentSnapshot<DocumentData>; // new addition
+}) {
+  const db = getFirestore();
+  if (isSingleWhereClause(whereClause)) {
+    whereClause = [whereClause];
+  }
+
+  const optionalQueryOptions = [
+    ...whereClause.map((w) => where(...w)),
+    orderByClause ? orderBy(...orderByClause) : undefined,
+    startAfterDoc ? startAfter(startAfterDoc) : undefined, // new
+    limit(limitClause),
+  ].filter(isNotUndefined);
+
+  const q = firestoreQuery(
+    collection(db, collectionPath),
+    ...optionalQueryOptions
+  );
+
+  const result = await getDocs(q);
+  return {
+    data: result.docs.map((item) => ({
+      ...item.data(),
+      id: item.id,
+    })),
+    lastDoc: result.docs[result.docs.length - 1], // return lastDoc
+  };
 }
 
 function isNotUndefined<T>(val: T | undefined): val is T {
@@ -122,7 +165,7 @@ const addItemById = async <T extends keyof FirestoreCollectionPaths>(
   const firestore = getFirestore();
   const result = await setDoc(doc(firestore, collectionPath, itemId), item);
 
-  return result; // as FirestoreCollectionPaths[T]
+  return result;
 };
 
 const updateItem = async <T extends keyof FirestoreCollectionPaths>(
@@ -149,6 +192,7 @@ const db = {
   updateItem,
   deleteItem,
   addItemById,
+  queryAll,
 };
 
 export default db;

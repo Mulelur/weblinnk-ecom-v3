@@ -10,6 +10,8 @@ import ProductDetailPage from "./Pages/ProductDetailPage";
 import LoginPage from "./Pages/LoginPage";
 import ConfirmationPage from "./Pages/ConfirmationPage";
 import CheckoutPage from "./Pages/CheckoutPage";
+import OrdersPage from "./Pages/OrdersPage";
+import RegisterPage from "./Pages/RegisterPage";
 
 function App() {
   const { user } = useAuth();
@@ -22,8 +24,10 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/s" />} />
-          <Route path="/s" element={<MainPage />} />
+          <Route path="/s" element={<MainPage user={user} />} />
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/s/:id" element={<ProductDetailPage user={user} />} />
           <Route path="/confirmation/:id" element={<ConfirmationPage />} />
           <Route

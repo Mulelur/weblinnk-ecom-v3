@@ -21,4 +21,5 @@ export interface Product {
   urlkey: string;
   width: number;
   shopId: string;
+  createdAt: string;
 }

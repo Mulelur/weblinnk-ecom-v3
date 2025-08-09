@@ -3,99 +3,129 @@ import * as React from "react";
 import db from "@/lib/db";
 import { limitText, moneyFormatter } from "@/lib/utils";
 import { Card } from "./ui/card";
-import type { Product } from "@/types/Product";
 import { Badge } from "./ui/badge";
 import { Link } from "react-router-dom";
+import type { DocumentSnapshot } from "firebase/firestore";
 
 type Props = {
   id: string;
 };
 
+const PAGE_SIZE = 4;
+
 export default function ProductList({ id }: Props) {
-  const [productList, setProductList] = React.useState<any>([]);
-  const [loading, setLoading] = React.useState(true);
-  console.log(productList);
+  const [productList, setProductList] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(true);
+
+  const lastDocRef = React.useRef<DocumentSnapshot | null>(null); // ← Track lastDoc safely
+  const observerRef = React.useRef<HTMLDivElement | null>(null);
+
+  const fetchProducts = React.useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const { data, lastDoc: newLastDoc } = await db.query({
+        collection: "weblinnk-products",
+        where: [["shopId", "==", id]],
+        limit: PAGE_SIZE,
+        startAfterDoc: lastDocRef.current ?? undefined, // Use ref here
+      });
+
+      setProductList((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const filtered = data.filter((p: any) => !ids.has(p.id));
+        return [...prev, ...filtered];
+      });
+
+      lastDocRef.current = newLastDoc || null; // ← update ref
+      setHasMore(data.length === PAGE_SIZE);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, loading, hasMore]);
 
   React.useEffect(() => {
-    db.query({
-      collection: "weblinnk-products",
-      where: [
-        ["shopId", "==", id],
-        // ["quantity", ">", 1],
-      ],
-      limit: 10,
-    })
-      .then((data) => {
-        setProductList(data);
-      })
-      .catch((err) => {
-        console.log(err, "err");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [id]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchProducts();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    const node = observerRef.current;
+    if (node) observer.observe(node);
+    return () => {
+      if (node) observer.unobserve(node);
+    };
+  }, [fetchProducts, hasMore, loading]);
 
   return (
     <>
       <h2 className="pb-2 text-lg">Products</h2>
-      <main className="grid grid-cols-2 gap-x-6 gap-y-10 pb-20 sm:grid-cols-3 sm:px-8 lg:mt-16 lg:grid-cols-4 lg:gap-x-4 lg:px-0">
-        {loading
-          ? [...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse px-4">
-                <div className="aspect-square bg-gray-200" />
-                <div className="mt-4 h-4 w-3/4 bg-gray-200" />
-                <div className="mt-2 h-4 w-1/2 bg-gray-200" />
-                <div className="py-4">
-                  <div className="h-10 w-full bg-gray-200" />
+
+      <main className="grid grid-cols-2 gap-x-6 gap-y-10 pb-10 sm:grid-cols-3 sm:px-8 lg:mt-16 lg:grid-cols-4 lg:gap-x-4 lg:px-0">
+        {productList.map((product: any) => (
+          <Card key={product.id} className="px-4">
+            <article className="relative">
+              <div className="aspect-square overflow-hidden">
+                <Link to={`/s/${product.id}`}>
+                  <img
+                    className="size-full object-cover transition-all duration-300 group-hover:scale-125"
+                    src={product.mainImage || ""}
+                    alt={product.title}
+                  />
+                </Link>
+              </div>
+              <div className="absolute top-0 m-1 rounded-full bg-white">
+                {product.compareAt && <Badge variant="destructive">Sale</Badge>}
+              </div>
+              <div className="mt-4 flex flex-col items-start justify-between">
+                <h3 className="text-xs font-semibold sm:text-sm md:text-base">
+                  {limitText(product.title)}
+                </h3>
+                <div className="flex text-right gap-2">
+                  {product.compareAt && (
+                    <p className="text-xs font-medium text-gray-400 line-through">
+                      R{product.compareAt}
+                    </p>
+                  )}
+                  <p className="text-xs font-normal sm:text-sm md:text-base">
+                    {moneyFormatter.format(Number(product?.price))}
+                  </p>
                 </div>
-              </Card>
-            ))
-          : productList.map((product: Product) => (
-              <Card
-                key={product.title}
-                className="px-4"
-                // onClick={() => dispatch(setSelectedProduct(product))}
-              >
-                <article className="relative">
-                  <div className="aspect-square overflow-hidden">
-                    <Link to={`/s/${product.id}`}>
-                      <img
-                        className="size-full object-cover transition-all duration-300 group-hover:scale-125"
-                        src={product.mainImage || ""}
-                        alt=""
-                        width={1000}
-                        height={1000}
-                      />
-                    </Link>
-                  </div>
-                  <div className="absolute top-0 m-1 rounded-full bg-white">
-                    {product.compareAt && (
-                      <Badge variant="destructive">Sale</Badge>
-                    )}
-                  </div>
-                  <div className="mt-4 flex flex-col items-start justify-between">
-                    <h3 className="text-xs font-semibold sm:text-sm md:text-base">
-                      {limitText(product.title)}
-                    </h3>
-                    <div className="flex text-right">
-                      {product.compareAt && (
-                        <p className="text-xs font-medium text-gray-400 line-through">
-                          R{product.compareAt}
-                        </p>
-                      )}
-                      <p className="text-xs font-normal sm:text-sm md:text-base">
-                        {moneyFormatter.format(Number(product?.price))}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="py-4">
-                    {/* <CheckoutDialog product={product} /> */}
-                  </div>
-                </article>
-              </Card>
-            ))}
+              </div>
+            </article>
+          </Card>
+        ))}
+
+        {loading &&
+          [...Array(PAGE_SIZE)].map((_, i) => (
+            <Card
+              key={`loader-${i}`}
+              className="flex flex-col gap-3 px-4 py-4 animate-pulse"
+            >
+              <div className="aspect-square rounded-lg bg-gray-200" />
+              <div className="h-4 w-3/4 rounded bg-gray-200" />
+              <div className="h-4 w-1/2 rounded bg-gray-200" />
+              <div className="mt-auto h-10 w-full rounded bg-gray-200" />
+            </Card>
+          ))}
       </main>
+
+      {/* Infinite scroll loader trigger */}
+      <div ref={observerRef} className="h-10" />
+
+      {!hasMore && !loading && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No more products to show.
+        </p>
+      )}
     </>
   );
 }

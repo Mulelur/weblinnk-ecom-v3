@@ -6,7 +6,7 @@ export interface Order {
   subTotal: number; // Tax amount
   total: number; // Total amount including tax and shipping
   user: User;
-  products: Product[];
+  products: Product;
   orderDate: string; // Assuming createOrderDate() returns a string
   status: OrderStatus; // Could be 'Processing', 'Shipped', 'Delivered', 'Cancelled', etc.
   shipping: Shipping;

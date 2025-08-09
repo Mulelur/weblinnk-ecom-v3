@@ -3,11 +3,34 @@ import type { Shop } from "@/types/Shop";
 import React from "react";
 import db from "@/lib/db";
 import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { User as TUser } from "@/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/initFirebase";
+import { ContactUsDialog } from "@/components/contact-us-dialog";
 
-export default function MainPage() {
+type Props = {
+  user: TUser | null;
+};
+
+export default function MainPage({ user }: Props) {
   const project_id = import.meta.env.VITE_WEBLINNK_PROJECT_ID;
 
   const [store, setStore] = React.useState<Shop | null>();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     async function fetchStore() {
@@ -25,6 +48,16 @@ export default function MainPage() {
     fetchStore();
   }, [project_id]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success("Logged out successfully");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      toast.error("Logout failed", { description: err.message });
+    }
+  };
+
   if (!store) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -40,7 +73,7 @@ export default function MainPage() {
     <>
       <div className="mx-auto max-w-screen-lg">
         <div
-          className="relative h-56 rounded-b-lg bg-cover bg-center bg-no-repeat shadow-lg"
+          className="relative lg:h-56 h-38  rounded-b-lg bg-cover bg-center bg-no-repeat shadow-lg"
           style={{ backgroundImage: `url(${store.banner})` }}
         >
           <div className="px-4 pb-10 pt-8">
@@ -63,25 +96,44 @@ export default function MainPage() {
           </div>
 
           <div>
-            {/* <div className="flex gap-4">
-            <button className="flex whitespace-nowrap rounded-lg bg-pink-600 px-6 py-2 font-bold text-white transition hover:translate-y-1">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="mr-2 inline h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              Chat with us
-            </button>
-          </div> */}
+            <div className="flex gap-4 items-center">
+              <ContactUsDialog />
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar>
+                      <AvatarImage src={user.photoURL || ""} />
+                      <AvatarFallback>
+                        <User />
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="start">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => navigate("/orders")}>
+                        My Orders
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  onClick={() =>
+                    navigate(
+                      `/login?redirect=${window.location.pathname}&lang=en`
+                    )
+                  }
+                >
+                  Login
+                </Button>
+              )}
+            </div>
             <p className="mt-4 flex items-center whitespace-nowrap text-gray-500 sm:justify-end">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

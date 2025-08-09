@@ -6,30 +6,17 @@ type Props = {
   linkHome: string;
 };
 
-export default function Breadcrumbs({ crumb, linkProducts, linkHome }: Props) {
+export default function Breadcrumbs({ crumb, linkProducts }: Props) {
   return (
     <nav className="flex">
       <ol role="list" className="flex items-center">
         <li className="text-left">
-          <div className="-m-1">
-            <a
-              href={linkHome}
-              className="rounded-md p-1 text-sm font-medium text-gray-600 hover:text-gray-800 focus:text-gray-900 focus:shadow"
-            >
-              {" "}
-              Home{" "}
-            </a>
-          </div>
-        </li>
-        <li className="text-left">
           <div className="flex items-center">
-            <span className="mx-2 text-gray-400">/</span>
             <div className="-m-1">
               <a
                 href={linkProducts}
                 className="rounded-md p-1 text-sm font-medium text-gray-600 hover:text-gray-800 focus:text-gray-900 focus:shadow"
               >
-                {" "}
                 Products{" "}
               </a>
             </div>

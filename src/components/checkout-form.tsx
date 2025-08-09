@@ -3,10 +3,8 @@ import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
 import { auth } from "@/lib/initFirebase";
 import { absoluteUrl, moneyFormatter } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import {
   Select,
   SelectContent,
@@ -48,7 +46,6 @@ export function CheckoutForm() {
   };
 
   const [loading, setLoading] = useState(false);
-  // const { push } = useRouter()
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -67,16 +64,12 @@ export function CheckoutForm() {
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
-      //   alert("You need to be logged in.");
-      console.log("hello");
       navigate(`/login?redirect=${window.location.pathname}&lang=en`);
       setLoading(false);
       return;
     }
 
     const token = await currentUser.getIdToken();
-
-    // 👉 Open blank tab immediately to avoid popup blocker
 
     if (!product) return;
 
@@ -129,7 +122,6 @@ export function CheckoutForm() {
     } catch (error) {
       console.error("Error creating checkout:", error);
       alert("Error initiating payment. Please try again.");
-      // newTab?.close()
     } finally {
       setLoading(false);
     }

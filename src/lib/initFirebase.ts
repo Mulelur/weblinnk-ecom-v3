@@ -2,8 +2,6 @@ import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-console.log(import.meta.env);
-
 // the values to initialize the firebase app can be found in your firebase project
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_PUBLIC_FIREBASE_API_KEY,
