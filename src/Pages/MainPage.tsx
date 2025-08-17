@@ -73,7 +73,7 @@ export default function MainPage({ user }: Props) {
     <>
       <div className="mx-auto max-w-screen-lg">
         <div
-          className="relative lg:h-56 h-38  rounded-b-lg bg-cover bg-center bg-no-repeat shadow-lg"
+          className="relative lg:h-56 h-41  rounded-b-lg bg-cover bg-center bg-no-repeat shadow-lg"
           style={{ backgroundImage: `url(${store.banner})` }}
         >
           <div className="px-4 pb-10 pt-8">
@@ -124,6 +124,8 @@ export default function MainPage({ user }: Props) {
                 </DropdownMenu>
               ) : (
                 <Button
+                  size="lg"
+                  className="bg-blue-900 hover:bg-sky-700"
                   onClick={() =>
                     navigate(
                       `/login?redirect=${window.location.pathname}&lang=en`

@@ -6,6 +6,7 @@ import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Link } from "react-router-dom";
 import type { DocumentSnapshot } from "firebase/firestore";
+import ProductSearch from "./s";
 
 type Props = {
   id: string;
@@ -18,6 +19,8 @@ export default function ProductList({ id }: Props) {
   const [loading, setLoading] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
 
+  console.log(productList);
+
   const lastDocRef = React.useRef<DocumentSnapshot | null>(null); // ← Track lastDoc safely
   const observerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -28,7 +31,10 @@ export default function ProductList({ id }: Props) {
     try {
       const { data, lastDoc: newLastDoc } = await db.query({
         collection: "weblinnk-products",
-        where: [["shopId", "==", id]],
+        where: [
+          ["shopId", "==", id],
+          ["stockavailability", "==", true],
+        ],
         limit: PAGE_SIZE,
         startAfterDoc: lastDocRef.current ?? undefined, // Use ref here
       });
@@ -47,6 +53,11 @@ export default function ProductList({ id }: Props) {
       setLoading(false);
     }
   }, [id, loading, hasMore]);
+
+  const handleSearchSubmit = (results: any[]) => {
+    setProductList(results);
+    setHasMore(false); // stop infinite scroll after filtering
+  };
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -67,6 +78,7 @@ export default function ProductList({ id }: Props) {
 
   return (
     <>
+      <ProductSearch onSearchSubmit={handleSearchSubmit} id={id} />
       <h2 className="pb-2 text-lg">Products</h2>
 
       <main className="grid grid-cols-2 gap-x-6 gap-y-10 pb-10 sm:grid-cols-3 sm:px-8 lg:mt-16 lg:grid-cols-4 lg:gap-x-4 lg:px-0">

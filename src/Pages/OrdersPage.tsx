@@ -32,7 +32,7 @@ export default function OrdersPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        "http://127.0.0.1:5001/weblinnk-project/us-central1/getOrders",
+        "https://us-central1-weblinnk-project.cloudfunctions.net/getOrders",
         {
           method: "POST",
           headers: {

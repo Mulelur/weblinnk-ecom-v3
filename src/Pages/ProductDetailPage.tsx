@@ -128,6 +128,7 @@ export default function ProductDetailPage({ user }: Props) {
                   </DropdownMenu>
                 ) : (
                   <Button
+                    className="bg-blue-900 hover:bg-sky-700"
                     onClick={() =>
                       navigate(
                         `/login?redirect=${window.location.pathname}&lang=en`
